@@ -9,7 +9,19 @@ import SwiftUI
 
 struct NewsLoadingShimmer: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        ForEach(0..<8){ _ in
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.gray.opacity(0.3))
+                .frame(height: 125)
+                .shimmer(
+                    gradient: Gradient(colors: [
+                        .gray.opacity(0.3),
+                        .gray.opacity(0.5),
+                        .gray.opacity(0.3)
+                    ])
+                )
+                .padding(.horizontal, 8)
+        }
     }
 }
 
