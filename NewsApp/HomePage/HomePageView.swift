@@ -13,7 +13,7 @@ struct HomePage: View {
     
     var body: some View {
         NavigationStack {
-            VStack{
+            VStack {
                 HomePageHeaderView(homePageViewModel: homePageViewModel)
                     .padding(.vertical, 8)
                 
@@ -22,8 +22,7 @@ struct HomePage: View {
                 
                 ScrollView {
                     if homePageViewModel.isLoading {
-                        ProgressView()
-                            .padding(.top, 40)
+                        NewsLoadingShimmer()
                     } else if let errorMessage = homePageViewModel.errorMessage {
                         Text(errorMessage)
                             .foregroundStyle(.secondary)
@@ -34,21 +33,26 @@ struct HomePage: View {
                                 Text("No Data Present")
                             } else {
                                 ForEach(homePageViewModel.articles, id: \.url) { article in
-                                    NewsContentView(imageURL: article.urlToImage, articleTitle: article.title, articleSourceName: article.source.name)
-                                        .task {
-                                            await homePageViewModel.loadMoreIfNeeded(currentArticle: article)
-                                        }
+                                    NewsContentView(
+                                        imageURL: article.urlToImage,
+                                        articleTitle: article.title,
+                                        articleSourceName: article.source.name
+                                    )
+                                    .task {
+                                        await homePageViewModel.loadMoreIfNeeded(currentArticle: article)
+                                    }
                                 }
                                 .padding(.vertical, 4)
                                 
                                 if homePageViewModel.isLoadingMore {
-                                    ProgressView()
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 12)
+                                    NewsLoadingShimmer()
                                 }
                             }
                         }
                     }
+                }
+                .refreshable {
+                    await homePageViewModel.fetchTopHeadlines()
                 }
             }
             .task {

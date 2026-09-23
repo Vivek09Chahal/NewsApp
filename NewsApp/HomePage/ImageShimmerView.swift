@@ -11,7 +11,7 @@ struct ImageShimmerView: View {
     var body: some View {
         RoundedRectangle(cornerRadius: 12)
             .fill(Color.gray.opacity(0.3))
-            .frame(width: 125, height: 125)
+            .frame(width: 130, height: 130)
             .shimmer(
                 gradient: Gradient(colors: [
                     .gray.opacity(0.3),
