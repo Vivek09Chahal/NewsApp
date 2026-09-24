@@ -6,18 +6,26 @@
 //
 
 import Foundation
+import Observation
 
 @Observable
 class homePageVM {
-
-    var country: String = "us"
+    var country: String = UserDefaults.standard.string(forKey: "userCountryCode") ?? "us" {
+        didSet {
+            UserDefaults.standard.set(country, forKey: "userCountryCode")
+            Task { @MainActor in
+                try? await fetchTopHeadlines()
+            }
+        }
+    }
+    
     private let network = Network()
     private let pageSize = 10
 
     var selectedCategory: newsCategories = .all {
         didSet {
             guard oldValue != selectedCategory else { return }
-            Task { await fetchTopHeadlines() }
+            Task { try? await fetchTopHeadlines() }
         }
     }
     
@@ -34,21 +42,14 @@ class homePageVM {
     }
 
     @MainActor
-    func fetchTopHeadlines() async {
+    func fetchTopHeadlines() async throws {
         isLoading = true
-        errorMessage = nil
-        currentPage = 1
-
-        do {
-            let endpoint = NewsEndpoint.topHeadlines(country: country, category: selectedCategory)
-            let result: Articles = try await network.urlResut(for: endpoint.path)
-            articles = result.articles
-            totalResults = result.totalResults
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-
-        isLoading = false
+        defer { isLoading = false }
+        
+        let endpoint = NewsEndpoint.topHeadlines(country: country, category: selectedCategory)
+        let result: Articles = try await network.urlResut(for: endpoint.path)
+        articles = result.articles
+        totalResults = result.totalResults
     }
 
     @MainActor

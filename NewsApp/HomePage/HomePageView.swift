@@ -20,43 +20,53 @@ struct HomePage: View {
                 NewsCategoryView(viewModel: homePageViewModel)
                     .padding(.bottom, 8)
                 
-                ScrollView {
-                    if homePageViewModel.isLoading {
-                        NewsLoadingShimmer()
-                    } else if let errorMessage = homePageViewModel.errorMessage {
-                        Text(errorMessage)
-                            .foregroundStyle(.secondary)
-                            .padding(.top, 40)
-                    } else {
-                        LazyVStack(alignment: .leading, spacing: 16) {
-                            if homePageViewModel.articles.isEmpty {
-                                Text("No Data Present")
-                            } else {
-                                ForEach(homePageViewModel.articles, id: \.url) { article in
-                                    NewsContentView(
-                                        imageURL: article.urlToImage,
-                                        articleTitle: article.title,
-                                        articleSourceName: article.source.name
-                                    )
-                                    .task {
-                                        await homePageViewModel.loadMoreIfNeeded(currentArticle: article)
+                if let errorMessage = homePageViewModel.errorMessage {
+                    Text(errorMessage)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 40)
+                    Image("empty_filter_v3")
+                } else {
+                    ScrollView {
+                        if homePageViewModel.isLoading {
+                            NewsLoadingShimmer()
+                        } else {
+                            LazyVStack(alignment: .leading, spacing: 16) {
+                                if homePageViewModel.articles.isEmpty {
+                                    VStack {
+                                        Image("empty_files_v3")
+                                        Text("No Data Present")
+                                            .font(.title3)
+                                            .fontWeight(.bold)
                                     }
-                                }
-                                .padding(.vertical, 4)
-                                
-                                if homePageViewModel.isLoadingMore {
-                                    NewsLoadingShimmer()
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .containerRelativeFrame(.vertical, alignment: .center)
+                                } else {
+                                    ForEach(homePageViewModel.articles, id: \.url) { article in
+                                        NewsContentView(
+                                            imageURL: article.urlToImage,
+                                            articleTitle: article.title,
+                                            articleSourceName: article.source.name
+                                        )
+                                        .task {
+                                            await homePageViewModel.loadMoreIfNeeded(currentArticle: article)
+                                        }
+                                    }
+                                    .padding(.vertical, 4)
+                                    
+                                    if homePageViewModel.isLoadingMore {
+                                        NewsLoadingShimmer()
+                                    }
                                 }
                             }
                         }
                     }
+                    .refreshable {
+                        try? await homePageViewModel.fetchTopHeadlines()
+                    }
+                    .task {
+                        try? await homePageViewModel.fetchTopHeadlines()
+                    }
                 }
-                .refreshable {
-                    await homePageViewModel.fetchTopHeadlines()
-                }
-            }
-            .task {
-                await homePageViewModel.fetchTopHeadlines()
             }
         }
     }
